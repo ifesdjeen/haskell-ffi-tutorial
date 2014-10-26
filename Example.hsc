@@ -28,19 +28,10 @@ instance Storable Foo where
     Foo
       `fpStr` #{ptr foo_t, name}  p
       `apArr` (#{peek foo_t, bar_num}  p, #{peek foo_t, bar}  p)
-    -- a1 <- peekCString $ #{ptr foo_t, name} p
-    -- a2 <- #{peek foo_t, bar_num} p
-    -- a3 <- peekCArray a2 $ #{peek foo_t, bar} p
-    -- return $ Foo a1 a3
 
   poke p      = undefined
 
 type FooPtr = Ptr Foo
-
--- instance Copy Foo where
---   fromC CFoo{..} = do
---     a <- mapM fromC cfooBars
---     return $ Foo cfooName a
 
 
 -- |
@@ -68,10 +59,6 @@ instance Storable Bar where
       `apDbl` #{peek bar_t, max}  p
 
   poke p      = undefined
-
--- instance Copy Bar where
---   fromC Bar{..} = do
---     return $ Bar cbarName (mkInt cbarType) (mkDbl cbarMin) (mkDbl cbarMax)
 
 
 
