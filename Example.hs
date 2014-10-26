@@ -14,53 +14,41 @@ import Foreign.C.String
 
 {-# LINE 12 "Example.hsc" #-}
 
-data family Struct a
-
-class Copy a where
-  copy  :: (Storable (Struct a)) => Ptr (Struct a) -> IO a
-  copy ptr = (peek ptr) >>= fromC
-  fromC :: Struct a -> IO a
-
 -- |
 -- | FOO
 -- |
 
 data Foo = Foo
-           { fooName :: !String
-           , bars    :: [Bar]
-           } deriving (Eq, Show)
+           { fooName   :: !String
+           , fooBars   :: ![Bar]
+           } deriving(Eq, Show)
 
-data instance Struct Foo = CFoo
-                           { cfooName   :: String
-                           , cfooBarNum :: CInt
-                           , cfooBars   :: [(Struct Bar)] --
-                           } deriving(Show)
-
-instance Storable (Struct Foo) where
+instance Storable Foo where
   alignment _ = 8
-{-# LINE 37 "Example.hsc" #-}
+{-# LINE 24 "Example.hsc" #-}
   sizeOf _    = (80)
-{-# LINE 38 "Example.hsc" #-}
+{-# LINE 25 "Example.hsc" #-}
 
   -- peek :: FooPtr -> IO (Struct Foo)
   peek p      = do
-    a1 <- peekCString $ (\hsc_ptr -> hsc_ptr `plusPtr` 0) p
-{-# LINE 42 "Example.hsc" #-}
-    a2 <- (\hsc_ptr -> peekByteOff hsc_ptr 64) p
-{-# LINE 43 "Example.hsc" #-}
-    ir <- (\hsc_ptr -> peekByteOff hsc_ptr 72) p
-{-# LINE 44 "Example.hsc" #-}
-    a3 <- peekArray (mkInt a2) ir
-    return $ CFoo a1 a2 a3
+    Foo
+      `fpStr` (\hsc_ptr -> hsc_ptr `plusPtr` 0)  p
+{-# LINE 30 "Example.hsc" #-}
+      `apArr` ((\hsc_ptr -> peekByteOff hsc_ptr 64)  p, (\hsc_ptr -> peekByteOff hsc_ptr 72)  p)
+{-# LINE 31 "Example.hsc" #-}
+    -- a1 <- peekCString $ #{ptr foo_t, name} p
+    -- a2 <- #{peek foo_t, bar_num} p
+    -- a3 <- peekCArray a2 $ #{peek foo_t, bar} p
+    -- return $ Foo a1 a3
 
   poke p      = undefined
 
-type FooPtr = Ptr (Struct Foo)
+type FooPtr = Ptr Foo
 
-instance Copy Foo where
-  fromC CFoo{..} = do
-    a <- mapM fromC cfooBars
-    return $ Foo cfooName a
+-- instance Copy Foo where
+--   fromC CFoo{..} = do
+--     a <- mapM fromC cfooBars
+--     return $ Foo cfooName a
 
 
 -- |
@@ -74,43 +62,37 @@ data Bar = Bar
            , barMax    :: Double
            } deriving (Eq, Show)
 
-data instance Struct Bar = CBar
-                           { cbarName   :: String
-                           , cbarType   :: CInt
-                           , cbarMin    :: CDouble
-                           , cbarMax    :: CDouble
-                           } deriving(Show)
+type BarPtr = Ptr Bar
 
-type BarPtr   = Ptr (Struct Bar)
-
-instance Storable (Struct Bar) where
+instance Storable Bar where
   alignment _ = 8
-{-# LINE 79 "Example.hsc" #-}
+{-# LINE 61 "Example.hsc" #-}
   sizeOf _    = (88)
-{-# LINE 80 "Example.hsc" #-}
+{-# LINE 62 "Example.hsc" #-}
 
   peek p      = do
-    a1 <- peekCString $ (\hsc_ptr -> hsc_ptr `plusPtr` 0) p
-{-# LINE 83 "Example.hsc" #-}
-    a2 <- (\hsc_ptr -> peekByteOff hsc_ptr 64) p
-{-# LINE 84 "Example.hsc" #-}
-    a3 <- (\hsc_ptr -> peekByteOff hsc_ptr 72)  p
-{-# LINE 85 "Example.hsc" #-}
-    a4 <- (\hsc_ptr -> peekByteOff hsc_ptr 80)  p
-{-# LINE 86 "Example.hsc" #-}
-    return $ CBar a1 a2 a3 a4
+    Bar
+      `fpStr` (\hsc_ptr -> hsc_ptr `plusPtr` 0)  p
+{-# LINE 66 "Example.hsc" #-}
+      `apInt` (\hsc_ptr -> peekByteOff hsc_ptr 64) p
+{-# LINE 67 "Example.hsc" #-}
+      `apDbl` (\hsc_ptr -> peekByteOff hsc_ptr 72)  p
+{-# LINE 68 "Example.hsc" #-}
+      `apDbl` (\hsc_ptr -> peekByteOff hsc_ptr 80)  p
+{-# LINE 69 "Example.hsc" #-}
+
   poke p      = undefined
 
-instance Copy Bar where
-  fromC CBar{..} = do
-    return $ Bar cbarName (mkInt cbarType) (mkDbl cbarMin) (mkDbl cbarMax)
+-- instance Copy Bar where
+--   fromC Bar{..} = do
+--     return $ Bar cbarName (mkInt cbarType) (mkDbl cbarMin) (mkDbl cbarMax)
 
 
 
 foreign export ccall entrypoint :: FooPtr -> IO ()
 entrypoint :: FooPtr -> IO ()
 entrypoint foo = do
-  b <- copy foo
+  b <- peek foo
   -- b <- fromC a
   print $ b
   return ()
@@ -121,3 +103,26 @@ mkInt = fromIntegral
 
 mkDbl :: CDouble -> Double
 mkDbl d = realToFrac d
+
+
+infixl 4 `apInt`, `apDbl`, `fpStr`, `apArr`
+
+fpStr :: (String -> b) -> CString -> IO b
+fpStr a b = a <$> (peekCString b)
+
+peekCArray :: (Storable a) => CInt -> IO (Ptr a) -> IO [a]
+peekCArray i ir = ir >>= peekArray (mkInt i)
+
+-- apArr :: IO ([a] -> b) -> IO (Ptr a) -> IO CInt -> IO b
+apArr :: Storable a => IO ([a] -> b) -> (IO CInt, IO (Ptr a)) -> IO b
+apArr f (i, b) = do
+  i' <- i
+  r  <- peekCArray i' b
+  f' <- f
+  return $ f' r
+
+apInt :: (Applicative f) => f (Int -> b) -> f CInt -> f b
+apInt a b = a <*> (mkInt <$> b)
+
+apDbl :: (Applicative f) => f (Double -> b) -> f CDouble -> f b
+apDbl a b = a <*> (mkDbl <$> b)
