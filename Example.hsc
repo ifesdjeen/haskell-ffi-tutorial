@@ -1,4 +1,9 @@
-{-# LANGUAGE CPP, ForeignFunctionInterface, EmptyDataDecls, TypeFamilies, RecordWildCards, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE CPP                         #-}
+{-# LANGUAGE ForeignFunctionInterface    #-}
+{-# LANGUAGE EmptyDataDecls              #-}
+{-# LANGUAGE TypeFamilies                #-}
+{-# LANGUAGE FlexibleInstances           #-}
+{-# LANGUAGE FlexibleContexts            #-}
 
 module Example where
 
@@ -15,9 +20,11 @@ import Foreign.C.String
 -- |
 
 data Foo = Foo
-           { fooName   :: !String
-           , fooBars   :: ![Bar]
-           } deriving(Eq, Show)
+    { fooName   :: !String
+    , fooBars   :: ![Bar]
+    } deriving(Eq, Show)
+
+type FooPtr = Ptr Foo
 
 instance Storable Foo where
   alignment _ = #{alignment foo_t}
@@ -27,23 +34,21 @@ instance Storable Foo where
   peek p      = do
     Foo
       `fpStr` #{ptr foo_t, name}  p
-      `apArr` (#{peek foo_t, bar_num}  p, #{peek foo_t, bar}  p)
+      `apArr` (#{peek foo_t, bar_num}  p,
+               #{peek foo_t, bar}      p)
 
   poke p      = undefined
-
-type FooPtr = Ptr Foo
-
 
 -- |
 -- | BAR
 -- |
 
 data Bar = Bar
-           { barName   :: String
-           , barType   :: Int
-           , barMin    :: Double
-           , barMax    :: Double
-           } deriving (Eq, Show)
+    { barName   :: !String
+    , barType   :: !Int
+    , barMin    :: !Double
+    , barMax    :: !Double
+    } deriving (Eq, Show)
 
 type BarPtr = Ptr Bar
 
@@ -66,7 +71,6 @@ foreign export ccall entrypoint :: FooPtr -> IO ()
 entrypoint :: FooPtr -> IO ()
 entrypoint foo = do
   b <- peek foo
-  -- b <- fromC a
   print $ b
   return ()
 
