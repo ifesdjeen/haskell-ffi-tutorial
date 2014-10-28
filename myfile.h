@@ -21,4 +21,23 @@ struct foo_s
 };
 typedef struct foo_s foo_t;
 
+#define UNION_TYPE_STRING  0
+#define UNION_TYPE_NUMBER  1
+#define UNION_TYPE_BOOLEAN 2
+
+struct weird_union_s
+{
+  union
+  {
+    char  *string;
+    double number;
+    int    boolean;
+  } value;
+  int type;
+};
+
+typedef struct weird_union_s weird_union_t;
+
+
+
 #endif /* EXAMPLE_H */
