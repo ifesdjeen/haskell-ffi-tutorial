@@ -80,14 +80,55 @@ instance Storable Bar where
 
   poke p      = undefined
 
+-- |
+-- | WEIRD UNION
+-- |
+
+data WeirdUnion = UString String |
+                  UDouble Double |
+                  UBool   Bool
+                deriving (Eq, Show)
 
 
-foreign export ccall entrypoint :: FooPtr -> IO ()
-entrypoint :: FooPtr -> IO ()
-entrypoint foo = do
-  b <- peek foo
-  -- b <- fromC a
+instance Storable WeirdUnion where
+  alignment _ = 8
+{-# LINE 80 "Example.hsc" #-}
+  sizeOf _    = (16)
+{-# LINE 81 "Example.hsc" #-}
+
+  peek p      = do
+    unionType  <- (\hsc_ptr -> peekByteOff hsc_ptr 8) p
+{-# LINE 84 "Example.hsc" #-}
+    unionValue <- (\hsc_ptr -> peekByteOff hsc_ptr 0) p
+{-# LINE 85 "Example.hsc" #-}
+
+    let
+        val = case (mkInt unionType) of
+          0 -> UString <$> (peekCString $  (\hsc_ptr -> hsc_ptr `plusPtr` 0)  unionValue)
+{-# LINE 89 "Example.hsc" #-}
+          1 -> UDouble <$> (mkDbl      <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p)
+{-# LINE 90 "Example.hsc" #-}
+          2 -> do
+            a <- mkInt <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p
+{-# LINE 92 "Example.hsc" #-}
+            return $ UBool $ case a of
+              0 -> False
+              1 -> True
+    val
+
+  poke p      = undefined
+
+type WeirdUnionPtr = Ptr WeirdUnion
+
+foreign export ccall entrypoint :: FooPtr -> WeirdUnionPtr -> WeirdUnionPtr -> IO ()
+entrypoint :: FooPtr -> WeirdUnionPtr -> WeirdUnionPtr -> IO ()
+entrypoint foo wustr wudbl = do
+  a <- peek foo
+  b <- peek wustr
+  c <- peek wudbl
+  print $ a
   print $ b
+  print $ c
   return ()
 
 
