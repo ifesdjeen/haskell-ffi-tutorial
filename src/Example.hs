@@ -1,6 +1,6 @@
-{-# LINE 1 "Example.hsc" #-}
+{-# LINE 1 "src/Example.hsc" #-}
 {-# LANGUAGE CPP                         #-}
-{-# LINE 2 "Example.hsc" #-}
+{-# LINE 2 "src/Example.hsc" #-}
 {-# LANGUAGE ForeignFunctionInterface    #-}
 {-# LANGUAGE EmptyDataDecls              #-}
 {-# LANGUAGE TypeFamilies                #-}
@@ -15,9 +15,9 @@ import Foreign.C.Types
 import Foreign.C.String
 
 
-{-# LINE 16 "Example.hsc" #-}
+{-# LINE 16 "src/Example.hsc" #-}
 
-{-# LINE 17 "Example.hsc" #-}
+{-# LINE 17 "src/Example.hsc" #-}
 
 -- |
 -- | FOO
@@ -32,19 +32,19 @@ type FooPtr = Ptr Foo
 
 instance Storable Foo where
   alignment _ = 8
-{-# LINE 31 "Example.hsc" #-}
+{-# LINE 31 "src/Example.hsc" #-}
   sizeOf _    = (80)
-{-# LINE 32 "Example.hsc" #-}
+{-# LINE 32 "src/Example.hsc" #-}
 
   -- peek :: FooPtr -> IO (Struct Foo)
   peek p      = do
     Foo
       `fpStr` (\hsc_ptr -> hsc_ptr `plusPtr` 0)  p
-{-# LINE 37 "Example.hsc" #-}
+{-# LINE 37 "src/Example.hsc" #-}
       `apArr` ((\hsc_ptr -> peekByteOff hsc_ptr 64)  p,
-{-# LINE 38 "Example.hsc" #-}
+{-# LINE 38 "src/Example.hsc" #-}
                (\hsc_ptr -> peekByteOff hsc_ptr 72)      p)
-{-# LINE 39 "Example.hsc" #-}
+{-# LINE 39 "src/Example.hsc" #-}
 
   poke p      = undefined
 
@@ -63,20 +63,20 @@ type BarPtr = Ptr Bar
 
 instance Storable Bar where
   alignment _ = 8
-{-# LINE 57 "Example.hsc" #-}
+{-# LINE 57 "src/Example.hsc" #-}
   sizeOf _    = (88)
-{-# LINE 58 "Example.hsc" #-}
+{-# LINE 58 "src/Example.hsc" #-}
 
   peek p      = do
     Bar
       `fpStr` (\hsc_ptr -> hsc_ptr `plusPtr` 0)  p
-{-# LINE 62 "Example.hsc" #-}
+{-# LINE 62 "src/Example.hsc" #-}
       `apInt` (\hsc_ptr -> peekByteOff hsc_ptr 64) p
-{-# LINE 63 "Example.hsc" #-}
+{-# LINE 63 "src/Example.hsc" #-}
       `apDbl` (\hsc_ptr -> peekByteOff hsc_ptr 72)  p
-{-# LINE 64 "Example.hsc" #-}
+{-# LINE 64 "src/Example.hsc" #-}
       `apDbl` (\hsc_ptr -> peekByteOff hsc_ptr 80)  p
-{-# LINE 65 "Example.hsc" #-}
+{-# LINE 65 "src/Example.hsc" #-}
 
   poke p      = undefined
 
@@ -92,25 +92,25 @@ data WeirdUnion = UString String |
 
 instance Storable WeirdUnion where
   alignment _ = 8
-{-# LINE 80 "Example.hsc" #-}
+{-# LINE 80 "src/Example.hsc" #-}
   sizeOf _    = (16)
-{-# LINE 81 "Example.hsc" #-}
+{-# LINE 81 "src/Example.hsc" #-}
 
   peek p      = do
     unionType  <- (\hsc_ptr -> peekByteOff hsc_ptr 8) p
-{-# LINE 84 "Example.hsc" #-}
+{-# LINE 84 "src/Example.hsc" #-}
     unionValue <- (\hsc_ptr -> peekByteOff hsc_ptr 0) p
-{-# LINE 85 "Example.hsc" #-}
+{-# LINE 85 "src/Example.hsc" #-}
 
     let
         val = case (mkInt unionType) of
           0 -> UString <$> (peekCString $  (\hsc_ptr -> hsc_ptr `plusPtr` 0)  unionValue)
-{-# LINE 89 "Example.hsc" #-}
+{-# LINE 89 "src/Example.hsc" #-}
           1 -> UDouble <$> (mkDbl      <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p)
-{-# LINE 90 "Example.hsc" #-}
+{-# LINE 90 "src/Example.hsc" #-}
           2 -> do
             a <- mkInt <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p
-{-# LINE 92 "Example.hsc" #-}
+{-# LINE 92 "src/Example.hsc" #-}
             return $ UBool $ case a of
               0 -> False
               1 -> True
