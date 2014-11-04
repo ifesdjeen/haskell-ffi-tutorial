@@ -7,11 +7,15 @@ so I decided to compose a complete tutorial together.
 
 # Covered subjects 
 
-  * how to (expressively) represent C `struct` in Haskell code
-  * how to call C code from Haskell
-  * how to call Haskell code from C
-  * how to operate on nested `struct`s 
-  * how to operate on `struct` arrays
+You'll learn how to:
+
+  * (expressively) represent C `struct` in Haskell code
+  * call C code from Haskell
+  * call Haskell code from C
+  * operate on nested `struct`s 
+  * operate on `struct` arrays
+  * decode `unions` 
+  
   
 # License
 
