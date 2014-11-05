@@ -99,17 +99,19 @@ instance Storable WeirdUnion where
   peek p      = do
     unionType  <- (\hsc_ptr -> peekByteOff hsc_ptr 8) p
 {-# LINE 84 "src/Example.hsc" #-}
-    unionValue <- (\hsc_ptr -> peekByteOff hsc_ptr 0) p
-{-# LINE 85 "src/Example.hsc" #-}
+
 
     case (mkInt unionType) of
-      0 -> UString <$> (peekCString $  (\hsc_ptr -> hsc_ptr `plusPtr` 0)  unionValue)
-{-# LINE 88 "src/Example.hsc" #-}
-      1 -> UDouble <$> (mkDbl      <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p)
+      0 -> do
+        unionValue <- (\hsc_ptr -> peekByteOff hsc_ptr 0) p
 {-# LINE 89 "src/Example.hsc" #-}
+        UString <$> (peekCString $  (\hsc_ptr -> hsc_ptr `plusPtr` 0)  unionValue)
+{-# LINE 90 "src/Example.hsc" #-}
+      1 -> UDouble <$> (mkDbl      <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p)
+{-# LINE 91 "src/Example.hsc" #-}
       2 -> do
         a <- mkInt <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p
-{-# LINE 91 "src/Example.hsc" #-}
+{-# LINE 93 "src/Example.hsc" #-}
         return $ UBool $ case a of
           0 -> False
           1 -> True

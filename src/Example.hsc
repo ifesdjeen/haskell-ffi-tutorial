@@ -81,11 +81,14 @@ instance Storable WeirdUnion where
 
   peek p      = do
     unionType  <- #{peek weird_union_t, type} p
-    unionValue <- #{peek weird_union_t, value} p
 
     case (mkInt unionType) of
-      0 -> UString <$> (peekCString $  #{ptr weird_union_t, value}  unionValue)
+      0 -> do
+        unionValue <- #{peek weird_union_t, value} p
+        UString <$> (peekCString $  #{ptr weird_union_t, value}  unionValue)
+
       1 -> UDouble <$> (mkDbl      <$> #{peek weird_union_t, value} p)
+
       2 -> do
         a <- mkInt <$> #{peek weird_union_t, value} p
         return $ UBool $ case a of
