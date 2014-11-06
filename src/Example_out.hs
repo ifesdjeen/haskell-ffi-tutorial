@@ -1,4 +1,8 @@
+{-# LINE 1 "src/Example.hs" #-}
+{-# LINE 1 "src/Example.hsc" #-}
+{-# LINE 2 "src/Example.hs" #-}
 {-# LANGUAGE CPP                         #-}
+{-# LINE 2 "src/Example.hsc" #-}
 {-# LANGUAGE ForeignFunctionInterface    #-}
 {-# LANGUAGE EmptyDataDecls              #-}
 {-# LANGUAGE TypeFamilies                #-}
@@ -13,8 +17,10 @@ import Foreign
 import Foreign.C.Types
 import Foreign.C.String
 
-#let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
-#include "myfile.h"
+
+{-# LINE 17 "src/Example.hsc" #-}
+
+{-# LINE 18 "src/Example.hsc" #-}
 
 -- |
 -- | FOO
@@ -28,27 +34,35 @@ data Foo = Foo
 type FooPtr = Ptr Foo
 
 instance Storable Foo where
-  alignment _ = #{alignment foo_t}
-  sizeOf _    = #{size      foo_t}
+  alignment _ = 8
+{-# LINE 32 "src/Example.hsc" #-}
+  sizeOf _    = (80)
+{-# LINE 33 "src/Example.hsc" #-}
 
   -- peek :: FooPtr -> IO (Struct Foo)
   peek p      = do
     Foo
-      `fpStr` #{ptr foo_t, name}  p
-      `apArr` (#{peek foo_t, bar_num}  p,
-               #{peek foo_t, bar}      p)
+      `fpStr` (\hsc_ptr -> hsc_ptr `plusPtr` 0)  p
+{-# LINE 38 "src/Example.hsc" #-}
+      `apArr` ((\hsc_ptr -> peekByteOff hsc_ptr 64)  p,
+{-# LINE 39 "src/Example.hsc" #-}
+               (\hsc_ptr -> peekByteOff hsc_ptr 72)      p)
+{-# LINE 40 "src/Example.hsc" #-}
 
   poke p Foo{..} = do
     cFooName     <- newCString fooName
     fooNameValue <- peekArray (length fooName) cFooName
-    pokeArray (#{ptr foo_t, name} p) fooNameValue
+    pokeArray ((\hsc_ptr -> hsc_ptr `plusPtr` 0) p) fooNameValue
+{-# LINE 45 "src/Example.hsc" #-}
 
     let fooBarsCount = length fooBars
-    #{poke foo_t, bar_num} p fooBarsCount
+    (\hsc_ptr -> pokeByteOff hsc_ptr 64) p fooBarsCount
+{-# LINE 48 "src/Example.hsc" #-}
     barArrPtr  <- mallocArray fooBarsCount
     pokeArray barArrPtr fooBars
 
-    #{poke foo_t, bar} p barArrPtr
+    (\hsc_ptr -> pokeByteOff hsc_ptr 72) p barArrPtr
+{-# LINE 52 "src/Example.hsc" #-}
 -- |
 -- | BAR
 -- |
@@ -63,24 +77,36 @@ data Bar = Bar
 type BarPtr = Ptr Bar
 
 instance Storable Bar where
-  alignment _ = #{alignment bar_t}
-  sizeOf _    = #{size      bar_t}
+  alignment _ = 8
+{-# LINE 67 "src/Example.hsc" #-}
+  sizeOf _    = (88)
+{-# LINE 68 "src/Example.hsc" #-}
 
   peek p      = do
     Bar
-      `fpStr` #{ptr bar_t, name}  p
-      `apInt` #{peek bar_t, type} p
-      `apDbl` #{peek bar_t, min}  p
-      `apDbl` #{peek bar_t, max}  p
+      `fpStr` (\hsc_ptr -> hsc_ptr `plusPtr` 0)  p
+{-# LINE 72 "src/Example.hsc" #-}
+      `apInt` (\hsc_ptr -> peekByteOff hsc_ptr 64) p
+{-# LINE 73 "src/Example.hsc" #-}
+      `apDbl` (\hsc_ptr -> peekByteOff hsc_ptr 72)  p
+{-# LINE 74 "src/Example.hsc" #-}
+      `apDbl` (\hsc_ptr -> peekByteOff hsc_ptr 80)  p
+{-# LINE 75 "src/Example.hsc" #-}
 
   poke p Bar{..} = do
     cBarName     <- newCString barName
     barNameValue <- peekArray (length barName) cBarName
-    pokeArray (#{ptr bar_t, name} p) barNameValue
+    pokeArray ((\hsc_ptr -> hsc_ptr `plusPtr` 0) p) barNameValue
+{-# LINE 80 "src/Example.hsc" #-}
 
-    #{poke bar_t, type} p barType
-    #{poke bar_t, min}  p barMin
-    #{poke bar_t, max}  p barMax
+    -- fooNamePtr <- newCString fooName
+    -- #{poke }
+    (\hsc_ptr -> pokeByteOff hsc_ptr 64) p barType
+{-# LINE 84 "src/Example.hsc" #-}
+    (\hsc_ptr -> pokeByteOff hsc_ptr 72)  p barMin
+{-# LINE 85 "src/Example.hsc" #-}
+    (\hsc_ptr -> pokeByteOff hsc_ptr 80)  p barMax
+{-# LINE 86 "src/Example.hsc" #-}
 
 -- |
 -- | WEIRD UNION
@@ -93,21 +119,28 @@ data WeirdUnion = UString String |
 
 
 instance Storable WeirdUnion where
-  alignment _ = #{alignment weird_union_t}
-  sizeOf _    = #{size      weird_union_t}
+  alignment _ = 8
+{-# LINE 99 "src/Example.hsc" #-}
+  sizeOf _    = (16)
+{-# LINE 100 "src/Example.hsc" #-}
 
   peek p      = do
-    unionType  <- #{peek weird_union_t, type} p
+    unionType  <- (\hsc_ptr -> peekByteOff hsc_ptr 8) p
+{-# LINE 103 "src/Example.hsc" #-}
 
     case (mkInt unionType) of
       0 -> do
-        unionValue <- #{peek weird_union_t, value} p
-        UString <$> (peekCString $  #{ptr weird_union_t, value}  unionValue)
+        unionValue <- (\hsc_ptr -> peekByteOff hsc_ptr 0) p
+{-# LINE 107 "src/Example.hsc" #-}
+        UString <$> (peekCString $  (\hsc_ptr -> hsc_ptr `plusPtr` 0)  unionValue)
+{-# LINE 108 "src/Example.hsc" #-}
 
-      1 -> UDouble <$> (mkDbl      <$> #{peek weird_union_t, value} p)
+      1 -> UDouble <$> (mkDbl      <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p)
+{-# LINE 110 "src/Example.hsc" #-}
 
       2 -> do
-        a <- mkInt <$> #{peek weird_union_t, value} p
+        a <- mkInt <$> (\hsc_ptr -> peekByteOff hsc_ptr 0) p
+{-# LINE 113 "src/Example.hsc" #-}
         return $ UBool $ case a of
           0 -> False
           1 -> True
