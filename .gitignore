@@ -6,7 +6,7 @@ cabal-dev
 *.chs.h
 .virthualenv
 .DS_Store
-
+*.hsc
 wrapper
 *out
 .\#
