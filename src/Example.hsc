@@ -4,6 +4,7 @@
 {-# LANGUAGE TypeFamilies                #-}
 {-# LANGUAGE FlexibleInstances           #-}
 {-# LANGUAGE FlexibleContexts            #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 module Example where
 
@@ -37,8 +38,17 @@ instance Storable Foo where
       `apArr` (#{peek foo_t, bar_num}  p,
                #{peek foo_t, bar}      p)
 
-  poke p      = undefined
+  poke p Foo{..} = do
+    cFooName     <- newCString fooName
+    fooNameValue <- peekArray (length fooName) cFooName
+    pokeArray (#{ptr foo_t, name} p) fooNameValue
 
+    let fooBarsCount = length fooBars
+    #{poke foo_t, bar_num} p fooBarsCount
+    barArrPtr  <- mallocArray fooBarsCount
+    pokeArray barArrPtr fooBars
+
+    #{poke foo_t, bar} p barArrPtr
 -- |
 -- | BAR
 -- |
@@ -63,7 +73,14 @@ instance Storable Bar where
       `apDbl` #{peek bar_t, min}  p
       `apDbl` #{peek bar_t, max}  p
 
-  poke p      = undefined
+  poke p Bar{..} = do
+    cBarName     <- newCString barName
+    barNameValue <- peekArray (length barName) cBarName
+    pokeArray (#{ptr bar_t, name} p) barNameValue
+
+    #{poke bar_t, type} p barType
+    #{poke bar_t, min}  p barMin
+    #{poke bar_t, max}  p barMax
 
 -- |
 -- | WEIRD UNION
@@ -102,12 +119,26 @@ type WeirdUnionPtr = Ptr WeirdUnion
 foreign export ccall entrypoint :: FooPtr -> WeirdUnionPtr -> WeirdUnionPtr -> IO ()
 entrypoint :: FooPtr -> WeirdUnionPtr -> WeirdUnionPtr -> IO ()
 entrypoint foo wustr wudbl = do
+  print "===== Foo Read from Haskell Code ======"
   a <- peek foo
+  print $ a
+
+  print "===== Union Read from Haskell Code ======"
   b <- peek wustr
   c <- peek wudbl
-  print $ a
   print $ b
   print $ c
+
+  print "===== Changed from Haskell Code ======"
+  let someFoo = Foo "created foo" [Bar "1 bar name"   100 0.001 1000.0
+                                  , Bar "2 bar name"  200 0.002 2000.0
+                                  , Bar "3 bar name"  300 0.003 3000.0]
+
+  poke foo someFoo
+
+  a <- peek foo
+  print $ a
+
   return ()
 
 
