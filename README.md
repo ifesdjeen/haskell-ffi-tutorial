@@ -15,7 +15,7 @@ You'll learn how to:
   * operate on nested `struct`s 
   * operate on `struct` arrays
   * decode `unions` 
-  
+  * read and write C fixed-length strings and Pointer-type Strings
   
 # License
 
