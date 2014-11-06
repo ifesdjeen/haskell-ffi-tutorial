@@ -1,27 +1,19 @@
 HSC2HS = hsc2hs
 GHC    = ghc
+CABAL  = cabal
 
 GHC_RUNTIME_LINKER_FLAG = -lHSrts-ghc7.8.3
 
-.PHONY: src/Example.hsc
-src/Example.hsc: src/Example.hs
-	$(HSC2HS) src/Example.hs -I./include
-
-libffi_example.so: Example.o wrapper.o
-	$(GHC) -o $@ -shared -dynamic -fPIC $^ $(GHC_RUNTIME_LINKER_FLAG)
-
-Example.o: src/Example.hs
-	$(GHC) -c -shared -dynamic -fPIC src/Example.hs
+.PHONY: dist/build/Example.o
+dist/build/Example.o: src/Example.hs
+	$(CABAL) configure && $(CABAL) build
 
 .PHONY: wrapper
-wrapper: cbits/wrapper.c Example.o
-	$(GHC) --make -no-hs-main -optc-O cbits/wrapper.c src/Example.hs -I./src -I./include -o wrapper
+wrapper: cbits/wrapper.c dist/build/Example.o
+	$(GHC) --make -no-hs-main -optc-O cbits/wrapper.c src/Example.hs -I./dist/build/ -I./include -o wrapper
 
 clean:
-	rm -f *.hi *.o *_stub.[ch] wrapper *.out
-
-clean-all:
-	rm -f *.hi *.o *_stub.[ch] *.so *.hsc wrapper *.out
+	rm -fr src/*.hi *.o */*.o src/*.hsc dist wrapper *.out *.so src/*_out.hs src/*.h
 
 all: wrapper
 	./wrapper
