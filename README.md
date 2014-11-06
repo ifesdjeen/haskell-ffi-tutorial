@@ -16,6 +16,9 @@ You'll learn how to:
   * operate on `struct` arrays
   * decode `unions` 
   * read and write C fixed-length strings and Pointer-type Strings
+
+## Minimum "Viable" setup
+
   
 # License
 
