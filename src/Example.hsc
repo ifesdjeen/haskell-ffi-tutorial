@@ -118,13 +118,13 @@ type WeirdUnionPtr = Ptr WeirdUnion
 
 foreign export ccall entrypoint :: FooPtr -> WeirdUnionPtr -> WeirdUnionPtr -> IO ()
 entrypoint :: FooPtr -> WeirdUnionPtr -> WeirdUnionPtr -> IO ()
-entrypoint foo wustr wudbl = do
+entrypoint foo wurst wudbl = do
   print "===== Foo Read from Haskell Code ======"
   a <- peek foo
   print $ a
 
   print "===== Union Read from Haskell Code ======"
-  b <- peek wustr
+  b <- peek wurst
   c <- peek wudbl
   print $ b
   print $ c
